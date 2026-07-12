@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
 
+  // 백엔드(4000)가 /shop 아래로 서빙한다. 따로 띄운 5174 는 방화벽 밖에서 안 보인다.
+  base: '/shop/',
+  build: { outDir: '../bigbang/project/resources/public/shop', emptyOutDir: true },
+
   // tsconfig 의 preserveSymlinks 와 같은 이유. 번들러도 링크를 따라가면 react 를 못
   // 찾고, @sgsg/design 이 react 를 peer 로 요구하므로 빌드가 죽는다.
   resolve: { preserveSymlinks: true, dedupe: ['react', 'react-dom'] },

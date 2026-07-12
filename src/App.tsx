@@ -17,7 +17,7 @@ function Private({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/shop">
       <Routes>
         <Route path="/" element={<Catalog />} />
         <Route path="/service/:id" element={<Service />} />
