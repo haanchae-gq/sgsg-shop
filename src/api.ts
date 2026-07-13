@@ -152,6 +152,13 @@ export const api = {
 
   item: (id: string): Promise<Item> => send('GET', `/shop/catalog/items/${id}`),
 
+  // 갈 수 있는 날. 회고: 접수→연락 5~7일의 상당 부분이 "언제 되는지 물어보는 왕복"이다.
+  // **어느 전문가가 비어 있는지는 말하지 않는다** — 고객이 전문가를 고르는 구조가 아니다.
+  availableDays: (unitType?: string): Promise<{
+    reason?: string;
+    days: { date: string; available: boolean }[];
+  }> => send('GET', `/shop/available-days?days=14${unitType ? `&unitType=${unitType}` : ''}`),
+
   // 현장 조건 → 예상 추가금. **결제 전에 보여 준다.**
   // 추가비용을 숨기면 현장에서 싸운다 (운영 회고).
   siteQuote: (site: Site): Promise<SiteQuote> => send('POST', '/shop/site-quote', site),

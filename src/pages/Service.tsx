@@ -57,6 +57,7 @@ export default function Service() {
   const [notes, setNotes] = useState('');
   const [site, setSite] = useState<Site>({ 'unit-count': 1, elevator: true, parking: true });
   const [sq, setSq] = useState<SiteQuote | null>(null);
+  const [days, setDays] = useState<{ date: string; available: boolean }[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +65,14 @@ export default function Service() {
   useEffect(() => {
     api.siteQuote(site).then(setSq).catch(() => setSq(null));
   }, [site]);
+
+  // 갈 수 있는 날. 에어컨 종류에 따라 달라진다 — 천장형을 하는 전문가가 적으면 날도 적다.
+  useEffect(() => {
+    api
+      .availableDays(site['unit-type'])
+      .then((d) => setDays(d.days))
+      .catch(() => setDays(null));
+  }, [site['unit-type']]);
 
   useEffect(() => {
     api.item(id).then(setItem).catch(() => setError('서비스를 불러오지 못했어요.'));
@@ -145,13 +154,61 @@ export default function Service() {
               value={addr2}
               onChange={(e) => setAddr2(e.target.value)}
             />
-            <Input
-              label="희망 일정"
-              type="datetime-local"
-              hint="확정은 전문가와 대화로 정합니다."
-              value={when}
-              onChange={(e) => setWhen(e.target.value)}
-            />
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>희망 날짜</div>
+
+              {/* 회고: 접수→연락 5~7일의 상당 부분이 "언제 되는지 물어보는 왕복"이다.
+                  고객이 여기서 바로 보면 그 왕복이 사라진다.
+
+                  '가능'이지 '확정'이 아니다 — 그 사이 다른 주문이 들어온다.
+                  확정은 배정 뒤에 전문가와 정한다. */}
+              {days && (
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+                  {days.map((d) => {
+                    const dt = new Date(`${d.date}T00:00:00+09:00`);
+                    const on = when.startsWith(d.date);
+                    return (
+                      <button
+                        key={d.date}
+                        type="button"
+                        disabled={!d.available}
+                        onClick={() => setWhen(`${d.date}T10:00`)}
+                        style={{
+                          minWidth: 62,
+                          padding: '8px 6px',
+                          borderRadius: 'var(--rd-12)',
+                          border: `1px solid ${
+                            on ? 'var(--color-primary-primary-surface)' : 'var(--color-divider-divider)'
+                          }`,
+                          background: on
+                            ? 'var(--color-background-primary-elevation-1)'
+                            : 'var(--color-background-elevation-1)',
+                          color: d.available
+                            ? on
+                              ? 'var(--color-primary-primary-text)'
+                              : 'var(--color-contents-contents)'
+                            : 'var(--color-contents-contents-disabled)',
+                          cursor: d.available ? 'pointer' : 'not-allowed',
+                          font: 'inherit',
+                        }}
+                      >
+                        <div style={{ fontSize: 12 }}>
+                          {['일', '월', '화', '수', '목', '금', '토'][dt.getDay()]}
+                        </div>
+                        <div style={{ fontWeight: on ? 700 : 400 }}>{dt.getDate()}</div>
+                        <div style={{ fontSize: 10, marginTop: 2 }}>
+                          {d.available ? '가능' : '—'}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="sg-muted" style={{ fontSize: 12, marginTop: 6 }}>
+                가능한 날짜예요. 정확한 시간은 배정된 전문가와 대화로 정합니다.
+              </div>
+            </div>
             <Input
               label="요청사항"
               placeholder="예: 반려동물이 있어요"
