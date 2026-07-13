@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { isLoggedIn } from './api';
 import Catalog from './pages/Catalog';
+import Store from './pages/Store';
+import StoreQuote from './pages/StoreQuote';
 import Service from './pages/Service';
 import Login from './pages/Login';
 import Orders from './pages/Orders';
@@ -21,6 +23,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Catalog />} />
         <Route path="/service/:id" element={<Service />} />
+        <Route path="/store" element={<Store />} />
+        <Route path="/store/:pno" element={<StoreQuote />} />
         <Route path="/login" element={<Login />} />
         <Route path="/orders" element={<Private><Orders /></Private>} />
         <Route path="/orders/:id" element={<Private><OrderDetail /></Private>} />

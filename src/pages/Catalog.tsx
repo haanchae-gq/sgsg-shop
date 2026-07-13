@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Empty, ServiceCard, Skeleton } from '@sgsg/design/components';
+import { Button, Card, Empty, ServiceCard, Skeleton } from '@sgsg/design/components';
 import { api, isLoggedIn, type Category } from '../api';
 
 /**
@@ -50,6 +50,20 @@ export default function Catalog() {
       </header>
 
       <div className="sg-pad sg-stack">
+        {/* 길이 둘이다. 가격이 정해진 것은 헤이홈 몰에서 바로 사고, 현장 견적이
+            필요한 것은 여기서 신청한다. 먼저 온 사람에게 그 차이를 말해 준다. */}
+        <Card onClick={() => nav('/store')} style={{ cursor: 'pointer' }}>
+          <div className="sg-row">
+            <div>
+              <div style={{ fontWeight: 700 }}>바로 신청</div>
+              <div className="sg-muted" style={{ fontSize: 13, marginTop: 2 }}>
+                가격이 정해진 서비스예요. 몇 가지만 답하면 금액이 바로 나옵니다.
+              </div>
+            </div>
+            <span style={{ color: 'var(--color-contents-contents-sub)' }}>›</span>
+          </div>
+        </Card>
+
         {error && <Empty title={error} description="잠시 후 다시 시도해 주세요." />}
 
         {!cats && !error && (

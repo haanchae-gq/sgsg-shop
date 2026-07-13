@@ -86,10 +86,52 @@ export type Order = {
 
 export type Review = { id: string; rating: number; content: string } | null;
 
+// --- 스토어 (헤이홈 몰 = 위사 입점몰) -------------------------------------
+
+export type StoreItem = {
+  pno: number;
+  name: string;
+  price: number;
+  'list-price'?: number;
+  description?: string;
+  image?: string | null;
+  'buy-url': string;
+};
+
+export type Choice = { 'items-no': number; label: string; 'add-price': number };
+export type Question = { opno: number; label: string; required: boolean; choices: Choice[] };
+
+export type Quote = {
+  pno: number;
+  name: string;
+  base: number;
+  extra: number;
+  total: number;
+  options: Choice[];
+};
+
+export type Handoff = Quote & { selected: string[]; 'buy-url': string };
+
 // --- 호출 ------------------------------------------------------------------
 
 export const api = {
   catalog: (): Promise<{ categories: Category[] }> => send('GET', '/shop/catalog'),
+
+  // --- 스토어 ---
+  // 확정가 상품은 헤이홈 몰에서 판다. 결제는 거기서 한다 — 돈은 한 군데서만 움직인다.
+  store: (): Promise<{ enabled: boolean; items: StoreItem[] }> => send('GET', '/shop/store'),
+
+  // 문진 = 상품의 옵션 세트. 문항을 우리가 따로 갖고 있지 않다.
+  questions: (pno: number): Promise<{ pno: number; questions: Question[] }> =>
+    send('GET', `/shop/store/${pno}/questions`),
+
+  // 견적은 미리보기다. 진짜 금액은 몰이 계산한다.
+  quote: (pno: number, choices: number[]): Promise<Quote> =>
+    send('POST', `/shop/store/${pno}/quote`, { choices }),
+
+  // 컨펌하면 몰의 상품 페이지로 넘어간다.
+  confirm: (pno: number, choices: number[]): Promise<Handoff> =>
+    send('POST', `/shop/store/${pno}/confirm`, { choices }),
 
   item: (id: string): Promise<Item> => send('GET', `/shop/catalog/items/${id}`),
 
