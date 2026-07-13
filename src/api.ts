@@ -112,6 +112,23 @@ export type Quote = {
 
 export type Handoff = Quote & { selected: string[]; 'buy-url': string };
 
+/** 현장 조건. 이걸 안 물으면 운영자가 다시 전화하고, 그 전화가 며칠을 잡아먹는다. */
+export type Site = {
+  'unit-type'?: string;
+  'unit-count'?: number;
+  floor?: number;
+  elevator?: boolean;
+  parking?: boolean;
+  commercial?: boolean;
+  ceiling?: string;
+  'soil-level'?: string;
+};
+
+export type SiteQuote = {
+  lines: { code: string; label: string; qty: number; amount: number }[];
+  total: number;
+};
+
 // --- 호출 ------------------------------------------------------------------
 
 export const api = {
@@ -134,6 +151,10 @@ export const api = {
     send('POST', `/shop/store/${pno}/confirm`, { choices }),
 
   item: (id: string): Promise<Item> => send('GET', `/shop/catalog/items/${id}`),
+
+  // 현장 조건 → 예상 추가금. **결제 전에 보여 준다.**
+  // 추가비용을 숨기면 현장에서 싸운다 (운영 회고).
+  siteQuote: (site: Site): Promise<SiteQuote> => send('POST', '/shop/site-quote', site),
 
   requestOtp: (phone: string) =>
     send('POST', '/shop/auth/request-otp', { phone }),

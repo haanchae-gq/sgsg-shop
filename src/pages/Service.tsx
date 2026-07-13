@@ -1,10 +1,49 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, Button, Card, Input, Price } from '@sgsg/design/components';
-import { api, ApiError, isLoggedIn, type Item } from '../api';
+import { api, ApiError, isLoggedIn, type Item, type Site, type SiteQuote } from '../api';
 import { uuid } from '../uuid';
 
+/**
+ * 현장 문진.
+ *
+ * 운영 회고: "고객이 서비스를 신청하면 예약이 완료된 것으로 인식하지만, 실제로는
+ * 정보가 부족해 다시 상담해야 한다." 그 전화 한 통이 **접수→연락 5~7일**의 출발점이고,
+ * 그 지연이 취소와 클레임이 됐다.
+ *
+ * 그래서 신청할 때 묻는다. 여기서 답한 것이 그대로 **배정 매칭**에 쓰인다 — 4층
+ * 엘리베이터 없음이면 그걸 못 올라가는 전문가는 후보에서 내려간다.
+ */
+const UNIT_TYPES = [
+  { v: 'wall', label: '벽걸이' },
+  { v: 'stand', label: '스탠드' },
+  { v: 'ceiling', label: '천장형' },
+  { v: 'system', label: '시스템에어컨' },
+];
+
 const won = (n: number) => `${Math.round(n).toLocaleString('ko-KR')}원`;
+
+function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '8px 14px',
+        borderRadius: 999,
+        border: `1px solid ${on ? 'var(--color-primary-primary-surface)' : 'var(--color-divider-divider)'}`,
+        background: on ? 'var(--color-background-primary-elevation-1)' : 'var(--color-background-elevation-1)',
+        // 연한 틴트 위의 글자는 primary-text 다. contents-on 은 브랜드 블루 면 위의 흰 글씨다.
+        color: on ? 'var(--color-primary-primary-text)' : 'var(--color-contents-contents)',
+        fontWeight: on ? 700 : 400,
+        font: 'inherit',
+        cursor: 'pointer',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 /** 서비스 상세 + 신청. 계약금은 30% 이고, 나머지는 작업이 끝난 뒤 잔금으로 낸다. */
 export default function Service() {
@@ -16,8 +55,15 @@ export default function Service() {
   const [addr2, setAddr2] = useState('');
   const [when, setWhen] = useState('');
   const [notes, setNotes] = useState('');
+  const [site, setSite] = useState<Site>({ 'unit-count': 1, elevator: true, parking: true });
+  const [sq, setSq] = useState<SiteQuote | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 답을 고칠 때마다 예상 추가금을 다시 계산한다. 결제 버튼을 누르고 나서 알면 늦다.
+  useEffect(() => {
+    api.siteQuote(site).then(setSq).catch(() => setSq(null));
+  }, [site]);
 
   useEffect(() => {
     api.item(id).then(setItem).catch(() => setError('서비스를 불러오지 못했어요.'));
@@ -52,6 +98,8 @@ export default function Service() {
           'service-address': { address1: addr.trim(), address2: addr2.trim() },
           'requested-date': when ? new Date(when).toISOString() : undefined,
           'customer-notes': notes.trim() || undefined,
+          // 배정 매칭이 이걸 읽는다.
+          'site-conditions': site,
         },
         idem,
       );
@@ -113,11 +161,99 @@ export default function Service() {
           </div>
         </Card>
 
+        {/* 현장 문진. 여기서 답한 것이 배정 매칭에 그대로 쓰인다 —
+            4층 엘리베이터 없음이면 그걸 못 올라가는 전문가는 후보에서 내려간다. */}
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>현장은 어떤가요?</div>
+          <div className="sg-muted" style={{ fontSize: 13, marginBottom: 12 }}>
+            미리 알려 주시면 전화로 다시 여쭤보지 않아도 돼요.
+          </div>
+
+          <div className="sg-stack">
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>에어컨 종류</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {UNIT_TYPES.map((t) => (
+                  <Chip
+                    key={t.v}
+                    on={site['unit-type'] === t.v}
+                    onClick={() => setSite({ ...site, 'unit-type': t.v })}
+                  >
+                    {t.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <Input
+              label="대수"
+              inputMode="numeric"
+              value={String(site['unit-count'] ?? 1)}
+              onChange={(e) =>
+                setSite({ ...site, 'unit-count': Math.max(1, Number(e.target.value) || 1) })
+              }
+            />
+
+            <Input
+              label="층수"
+              inputMode="numeric"
+              value={site.floor == null ? '' : String(site.floor)}
+              onChange={(e) =>
+                setSite({ ...site, floor: e.target.value ? Number(e.target.value) : undefined })
+              }
+            />
+
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <Chip on={site.elevator === false} onClick={() => setSite({ ...site, elevator: site.elevator === false ? true : false })}>
+                엘리베이터 없음
+              </Chip>
+              <Chip on={site.parking === false} onClick={() => setSite({ ...site, parking: site.parking === false ? true : false })}>
+                주차 불가
+              </Chip>
+              <Chip on={!!site.commercial} onClick={() => setSite({ ...site, commercial: !site.commercial })}>
+                상업시설
+              </Chip>
+              <Chip on={site.ceiling === 'high'} onClick={() => setSite({ ...site, ceiling: site.ceiling === 'high' ? undefined : 'high' })}>
+                천장이 높아요
+              </Chip>
+              <Chip on={site['soil-level'] === 'heavy'} onClick={() => setSite({ ...site, 'soil-level': site['soil-level'] === 'heavy' ? undefined : 'heavy' })}>
+                오염이 심해요
+              </Chip>
+            </div>
+          </div>
+        </Card>
+
         <Card>
           <div className="sg-row">
             <span>기본가</span>
             <b>{won(item['base-price'])}</b>
           </div>
+
+          {/* 추가비용을 숨기면 현장에서 싸운다. 결제 전에, 항목별로 보여 준다. */}
+          {sq && sq.lines.length > 0 && (
+            <>
+              {sq.lines.map((l) => (
+                <div className="sg-row" key={l.code} style={{ marginTop: 8 }}>
+                  <span className="sg-muted">
+                    {l.label}
+                    {l.qty > 1 ? ` ×${l.qty}` : ''}
+                  </span>
+                  <span>+{won(l.amount)}</span>
+                </div>
+              ))}
+              <div
+                className="sg-row"
+                style={{
+                  marginTop: 12,
+                  paddingTop: 12,
+                  borderTop: '1px solid var(--color-divider-divider)',
+                }}
+              >
+                <b>예상 합계</b>
+                <b>{won(item['base-price'] + sq.total)}</b>
+              </div>
+            </>
+          )}
           <div className="sg-row" style={{ marginTop: 8 }}>
             <span>지금 낼 계약금 (30%)</span>
             <b>{won(deposit)}</b>
