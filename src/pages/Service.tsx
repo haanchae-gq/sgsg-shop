@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, Button, Card, Input, Price } from '@sgsg/design/components';
 import { api, ApiError, isLoggedIn, type Item } from '../api';
+import { uuid } from '../uuid';
 
 const won = (n: number) => `${Math.round(n).toLocaleString('ko-KR')}원`;
 
@@ -23,7 +24,10 @@ export default function Service() {
   }, [id]);
 
   // 주문 하나에 키 하나. 결제 버튼을 두 번 눌러도 주문이 두 개 생기면 안 된다.
-  const idem = useMemo(() => crypto.randomUUID(), []);
+  //
+  // crypto.randomUUID() 를 직접 부르지 않는다 — 보안 컨텍스트(HTTPS/localhost)에서만
+  // 존재해서, 평문 HTTP 로 서빙되는 지금은 없다. 그거 하나로 이 화면이 통째로 죽었다.
+  const idem = useMemo(() => uuid(), []);
 
   const deposit = item ? Math.round(item['base-price'] * 0.3) : 0;
 
