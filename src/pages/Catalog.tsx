@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Empty, ServiceCard, Skeleton } from '@sgsg/design/components';
-import { api, isLoggedIn, type Category } from '../api';
+import { api, type Category } from '../api';
+import { Footer, Header } from '../Chrome';
+import { BRAND, GUARANTEES } from '../content';
 
 /**
  * 디자인 시스템의 카테고리는 넷뿐이다 — 사이트의 실제 분류이고, 새로 지어내면 안
@@ -35,19 +37,35 @@ export default function Catalog() {
 
   return (
     <div className="sg-shell">
-      <header className="sg-pad sg-row">
-        <div>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>쓱싹</div>
-          <div className="sg-muted">양심가격, 안심케어</div>
-        </div>
-        <Button
-          variant="ghost"
-          size="s"
-          onClick={() => nav(isLoggedIn() ? '/orders' : '/login')}
+      <Header />
+
+      {/* 처음 온 사람이 가장 먼저 묻는 것은 "얼마예요" 가 아니라 "덤터기 안 씌워요?" 다.
+          약속을 가격보다 먼저 보여 준다. 자세한 것은 소개 화면으로. */}
+      <section
+        className="sg-pad"
+        style={{ background: 'var(--color-background-primary-elevation-1)' }}
+      >
+        <h1 style={{ fontSize: 20, lineHeight: 1.4, fontWeight: 800, margin: 0, whiteSpace: 'pre-line' }}>
+          {BRAND.hero}
+        </h1>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 'var(--sp-8)',
+            marginTop: 'var(--sp-16)',
+          }}
         >
-          {isLoggedIn() ? '내 주문' : '로그인'}
+          {GUARANTEES.map((g) => (
+            <div key={g.title} style={{ fontSize: 13, fontWeight: 700 }}>
+              · {g.title}
+            </div>
+          ))}
+        </div>
+        <Button variant="ghost" size="s" style={{ marginTop: 'var(--sp-12)' }} onClick={() => nav('/about')}>
+          쓱싹이 어떤 회사인지 보기 ›
         </Button>
-      </header>
+      </section>
 
       <div className="sg-pad sg-stack">
         {/* 길이 둘이다. 가격이 정해진 것은 헤이홈 몰에서 바로 사고, 현장 견적이
@@ -102,10 +120,12 @@ export default function Catalog() {
         )}
       </div>
 
-      <footer className="sg-pad sg-muted" style={{ fontSize: 12 }}>
+      <div className="sg-pad sg-muted" style={{ fontSize: 12, paddingTop: 0 }}>
         '~' 가 붙은 금액은 기본가입니다. 현장 상황에 따라 추가비용이 발생할 수 있고,
         추가비용은 전문가가 현장에서 알려 드리고 동의를 받은 뒤에만 청구됩니다.
-      </footer>
+      </div>
+
+      <Footer />
     </div>
   );
 }

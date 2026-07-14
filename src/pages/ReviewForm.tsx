@@ -78,7 +78,7 @@ export default function ReviewForm({ orderId }: { orderId: string }) {
               fontSize: 30,
               lineHeight: 1,
               padding: 0,
-              color: n <= rating ? '#FAAD14' : 'var(--color-divider-divider)',
+              color: n <= rating ? 'var(--color-individuals-warning)' : 'var(--color-divider-divider)',
             }}
           >
             ★

@@ -82,7 +82,7 @@ export default function Chat({ orderId }: { orderId: string }) {
                   background: mine
                     ? 'var(--color-primary-primary-surface)'
                     : 'var(--color-background-elevation-2)',
-                  color: mine ? '#fff' : 'var(--color-contents-contents)',
+                  color: mine ? 'var(--color-contents-contents-on)' : 'var(--color-contents-contents)',
                   fontSize: 15,
                   whiteSpace: 'pre-wrap',
                 }}

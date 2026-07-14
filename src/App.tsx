@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { isLoggedIn } from './api';
 import Catalog from './pages/Catalog';
+import About from './pages/About';
 import Store from './pages/Store';
 import StoreQuote from './pages/StoreQuote';
 import Service from './pages/Service';
@@ -22,6 +23,7 @@ export default function App() {
     <BrowserRouter basename="/shop">
       <Routes>
         <Route path="/" element={<Catalog />} />
+        <Route path="/about" element={<About />} />
         <Route path="/service/:id" element={<Service />} />
         <Route path="/store" element={<Store />} />
         <Route path="/store/:pno" element={<StoreQuote />} />
