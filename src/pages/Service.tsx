@@ -53,7 +53,28 @@ export default function Service() {
   const [item, setItem] = useState<Item | null>(null);
   const [addr, setAddr] = useState('');
   const [addr2, setAddr2] = useState('');
-  const [when, setWhen] = useState('');
+  /**
+   * ★ 고객이 **가능한 날짜를 여러 개** 고른다 (최대 3개).
+   *
+   * 하나만 못 박으면 주문이 경직된다 — 같은 날 같은 동네에 주문이 **우연히** 모여야만
+   * 하루가 만들어진다. 셋을 받으면 주문이 떠다니고, 시장이 하루가 만들어지는 곳에 그
+   * 주문을 놓을 수 있다.
+   *
+   * 고객이 잃는 것은 없다: 고른 날짜 **중에서만** 확정되고, 확정되면 바로 알려 준다.
+   * 그리고 정직하게 말할 수 있는 이득이 하나 있다 — **여러 날을 고르면 더 빨리 배정된다.**
+   * 지어낸 할인이 아니라 실제로 참인 문장이다.
+   */
+  const [dates, setDates] = useState<string[]>([]);
+  const MAX_DATES = 3;
+
+  const toggleDate = (d: string) =>
+    setDates((prev) =>
+      prev.includes(d)
+        ? prev.filter((x) => x !== d)
+        : prev.length >= MAX_DATES
+          ? prev
+          : [...prev, d],
+    );
   const [notes, setNotes] = useState('');
   const [site, setSite] = useState<Site>({ 'unit-count': 1, elevator: true, parking: true });
   const [sq, setSq] = useState<SiteQuote | null>(null);
@@ -105,7 +126,10 @@ export default function Service() {
           'service-item-id': id,
           'service-quantity': 1,
           'service-address': { address1: addr.trim(), address2: addr2.trim() },
-          'requested-date': when ? new Date(when).toISOString() : undefined,
+          // 1순위는 requested-date 로 남긴다 (기존 화면들이 이 칸을 읽는다).
+          'requested-date': dates[0] ? new Date(`${dates[0]}T10:00:00+09:00`).toISOString() : undefined,
+          // 나머지는 후보 날짜로. 하루에 들어갈 때만 이 중 하나로 확정된다.
+          'date-options': dates,
           'customer-notes': notes.trim() || undefined,
           // 배정 매칭이 이걸 읽는다.
           'site-conditions': site,
@@ -166,13 +190,13 @@ export default function Service() {
                 <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
                   {days.map((d) => {
                     const dt = new Date(`${d.date}T00:00:00+09:00`);
-                    const on = when.startsWith(d.date);
+                    const on = dates.includes(d.date);
                     return (
                       <button
                         key={d.date}
                         type="button"
-                        disabled={!d.available}
-                        onClick={() => setWhen(`${d.date}T10:00`)}
+                        disabled={!d.available || (!on && dates.length >= MAX_DATES)}
+                        onClick={() => toggleDate(d.date)}
                         style={{
                           minWidth: 62,
                           padding: '8px 6px',
@@ -197,7 +221,7 @@ export default function Service() {
                         </div>
                         <div style={{ fontWeight: on ? 700 : 400 }}>{dt.getDate()}</div>
                         <div style={{ fontSize: 10, marginTop: 2 }}>
-                          {d.available ? '가능' : '—'}
+                          {on ? '✓ 선택' : d.available ? '가능' : '—'}
                         </div>
                       </button>
                     );
@@ -206,7 +230,21 @@ export default function Service() {
               )}
 
               <div className="sg-muted" style={{ fontSize: 12, marginTop: 6 }}>
-                가능한 날짜예요. 정확한 시간은 배정된 전문가와 대화로 정합니다.
+                {dates.length === 0 && (
+                  <>가능한 날을 <b>최대 {MAX_DATES}개</b>까지 골라 주세요.</>
+                )}
+                {dates.length === 1 && (
+                  <>
+                    하루만 고르셨어요. <b>여러 날을 고르면 더 빨리 배정됩니다</b> — 전문가의
+                    동선에 맞는 날로 잡을 수 있거든요.
+                  </>
+                )}
+                {dates.length > 1 && (
+                  <>
+                    {dates.length}개 날짜 중 <b>하나로 확정</b>해서 알려 드려요. 고르지 않은
+                    날에는 가지 않습니다.
+                  </>
+                )}
               </div>
             </div>
             <Input
