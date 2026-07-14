@@ -9,11 +9,48 @@
  *   다시 받아야 한다. 마케팅 수치는 코드에 박히는 순간 아무도 안 고친다.
  */
 
+import heroPc from './assets/img/hero-pc.png';
+import svcAircon from './assets/img/svc-aircon.png';
+import svcClog from './assets/img/svc-clog.png';
+import svcHome from './assets/img/svc-home.png';
+import expert1 from './assets/img/expert1.png';
+import expert2 from './assets/img/expert2.png';
+import expert3 from './assets/img/expert3.png';
+import expert4 from './assets/img/expert4.png';
+
 export const BRAND = {
   name: '쓱싹',
   tagline: '양심가격, 안심케어',
   hero: '소비자 기만이 일상이던 가전시장\n쓱싹이 투명히 개선합니다.',
+  /** 마스코트. 투명 컷아웃이라 라이트/다크 어디에 놓아도 배경이 뜨지 않는다. */
+  mascot: heroPc,
 } as const;
+
+/**
+ * 서비스 → 사진.
+ *
+ * ★ 서비스 id 로 매핑하지 않는다. id 는 DB 가 정하고 상품이 늘면 바뀐다 — 그때마다
+ * 코드를 고치면 새 상품은 **사진 없이** 뜬다. 이름의 키워드로 고르고, 못 고르면
+ * `null` 을 돌려 카드가 사진 없이도 멀쩡하게 보이게 한다.
+ */
+const SERVICE_IMAGES: [RegExp, string][] = [
+  [/에어컨/, svcAircon],
+  [/배수구|막힘|하수구|싱크대|변기|세면대/, svcClog],
+  [/청소|이사|입주/, svcHome],
+];
+
+export function serviceImage(name?: string): string | null {
+  if (!name) return null;
+  return SERVICE_IMAGES.find(([re]) => re.test(name))?.[1] ?? null;
+}
+
+/** 이용 방법. 원본의 how1~4 이미지는 라이트 모드로 구워져 있어 쓰지 않고 직접 그린다. */
+export const STEPS = [
+  { title: '서비스 신청', body: '원하는 서비스와 날짜를 고르고 신청해요.' },
+  { title: '전문가 배정', body: '거리·일정·자격을 보고 그 일을 할 수 있는 전문가를 배정해요.' },
+  { title: '방문 · 작업', body: '전문가가 방문해 작업합니다. 추가비용은 동의를 받은 뒤에만 청구돼요.' },
+  { title: '결제 · 보증', body: '작업 후 결제하고, 무상 A/S 보증서가 발급됩니다.' },
+] as const;
 
 /** 쓱싹만의 보장 서비스. 이 넷이 우리가 고객에게 하는 약속의 전부다. */
 export const GUARANTEES = [
@@ -44,31 +81,38 @@ export const STATS = [
 /** 전문가의 말. 실명이고 회사가 이미 공개한 문장이다 — 임의로 고치지 않는다. */
 export const EXPERT_VOICES = [
   {
+    photo: expert1,
     name: '함태진',
     quote: '속이고 가스충전? 일 그만두라 하겠습니다',
     body: '저는 다시 태어나도 에어컨 설치 할 겁니다. 기술 오래 가구요. 자부심 있습니다.',
   },
   {
+    photo: expert2,
     name: '고정욱',
     quote: '100건 중 컴플레인 0건, 비결을 보여드리겠습니다',
     body: '완벽한 설치와 고객 입장에서의 세심한 설명. 신뢰의 조건이라 생각합니다.',
   },
   {
+    photo: expert3,
     name: '백상준',
     quote: 'TV 뒤 보이지 않는 부분까지 꼼꼼히 시공합니다',
     body: '설치 후 고객님께서 좋아하시는 모습을 보면 힘이 나고 큰 보람을 느낍니다.',
   },
   {
+    photo: expert4,
     name: '박수용',
     quote: '흠 잡을데 없는 완벽한 설치, 자신있습니다',
     body: '언제나 정해진 설치 메뉴얼을 준수합니다. 믿고 맡겨주세요.',
   },
   {
+    // 사진 에셋이 없다. 없는 사진을 남의 얼굴로 채우지 않는다.
+    photo: null,
     name: '김태봉',
     quote: '엔지니어는 열심히가 아니라 잘해야 합니다',
     body: '완벽히 설치하는 건 기본이죠. 외관도 최대한 깔끔히, 인테리어까지 생각합니다.',
   },
   {
+    photo: null,
     name: '이무남',
     quote: '성실하고 정확한 설치로 A/S가 발생하지 않도록!',
     body: '쓱싹 전문가의 자부심을 갖고, 고객님의 든든한 기술자가 되겠습니다.',

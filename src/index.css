@@ -13,6 +13,11 @@
 body {
   margin: 0;
   font-family: var(--font-family-sans);
+  /* ★ 한글은 기본값(break-word)으로 두면 **어절 중간에서 끊긴다** — "가전시 / 장".
+     영어는 단어 사이에 공백이 있어 티가 안 나지만 한글은 바로 읽기가 무너진다.
+     keep-all 은 어절을 통째로 넘긴다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;   /* 다만 URL 같은 초장문 토큰은 넘칠 수 있으니 예외를 둔다 */
   /* `elevation-0` 은 **없는 토큰이다.** 지어냈고, 그래서 배경색이 통째로 날아갔다.
      가장 아래 면은 elevation-2 다. */
   background: var(--color-background-elevation-2);
@@ -21,9 +26,38 @@ body {
 }
 
 a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   반응형 뼈대
+   ═══════════════════════════════════════════════════════════════════════
+
+   ★ 전에는 `.sg-shell { max-width: 720px }` 하나로 모든 화면을 감쌌다. 그래서 데스크탑
+   에서는 **가운데 좁은 기둥 하나**가 서 있는, 폰 앱을 늘려 놓은 모양이 됐다.
+
+   이제 둘로 나눈다:
+
+     .sg-site  — 소개·카탈로그처럼 **넓게 펴는** 화면. 안쪽 .sg-wrap 이 1120px 로 잡는다.
+     .sg-shell — 주문서·로그인처럼 **한 줄로 읽는** 화면. 640px. 넓히면 눈이 왕복한다.
+
+   둘 다 모바일에서는 그냥 한 칸이다.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.sg-wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--sp-20);
+}
+
+.sg-site {
+  min-height: 100vh;
+  background: var(--color-background-elevation-1);
+}
 
 .sg-shell {
-  max-width: 720px;
+  width: 100%;
+  max-width: 640px;
   margin: 0 auto;
   min-height: 100vh;
   background: var(--color-background-elevation-1);
@@ -36,3 +70,166 @@ a { color: inherit; text-decoration: none; }
 /* 보조 텍스트는 `contents-sub` 다. `contents-alternative` 도 **없는 이름이었다** —
    없는 변수를 쓰면 색이 상속돼 본문과 구분이 사라진다. */
 .sg-muted { color: var(--color-contents-contents-sub); font-size: 14px; }
+
+/* 섹션 — 소개/카탈로그의 리듬 */
+.sg-section { padding: var(--sp-40) 0; }
+.sg-section__title { font-size: 22px; font-weight: 800; margin: 0 0 var(--sp-8); }
+.sg-section__lead  { color: var(--color-contents-contents-sub); margin: 0 0 var(--sp-24); }
+
+/* ── 히어로 ────────────────────────────────────────────────────────────
+   모바일: 글 위, 마스코트 아래. 데스크탑: 나란히.
+   마스코트는 투명 컷아웃이라 라이트/다크 어디에 놓아도 뜨지 않는다. */
+.sg-hero {
+  background: var(--color-background-primary-elevation-1);
+  overflow: hidden;
+}
+.sg-hero__inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-24);
+  align-items: center;
+  padding: var(--sp-40) var(--sp-20);
+}
+.sg-hero__eyebrow {
+  font-size: 13px; font-weight: 700;
+  color: var(--color-primary-primary-text);
+  margin: 0 0 var(--sp-8);
+}
+.sg-hero__title {
+  font-size: 26px; line-height: 1.35; font-weight: 800;
+  margin: 0; white-space: pre-line;
+}
+.sg-hero__art { justify-self: center; max-width: 260px; }
+
+@media (min-width: 768px) {
+  .sg-hero__inner {
+    grid-template-columns: 1.15fr 0.85fr;
+    padding: var(--sp-64) var(--sp-20);
+    gap: var(--sp-40);
+  }
+  .sg-hero__title { font-size: 36px; }
+  .sg-hero__art { max-width: 340px; justify-self: end; }
+}
+
+/* ── 카드 그리드 (보장·서비스·전문가 공용) ─────────────────────────────
+   모바일 1열 → 태블릿 2열 → 데스크탑 3~4열. auto-fit 이 아니라 명시적 단계를 쓴다:
+   auto-fit 은 카드가 하나뿐일 때 화면 끝까지 늘어나 우스워진다. */
+.sg-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-12); }
+@media (min-width: 600px) { .sg-grid { grid-template-columns: repeat(2, 1fr); gap: var(--sp-16); } }
+@media (min-width: 960px) { .sg-grid--3 { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 960px) { .sg-grid--4 { grid-template-columns: repeat(4, 1fr); } }
+
+/* ── 서비스 카드 ─────────────────────────────────────────────────────── */
+.sg-svc {
+  display: flex;
+  gap: var(--sp-16);
+  align-items: center;
+  width: 100%;
+  padding: var(--sp-16);
+  text-align: left;
+  background: var(--color-background-elevation-1);
+  border: 1px solid var(--color-divider-divider);
+  border-radius: var(--rd-16);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color .12s ease, transform .12s ease;
+}
+.sg-svc:hover { border-color: var(--color-primary-primary); transform: translateY(-1px); }
+.sg-svc:focus-visible { outline: 2px solid var(--color-individuals-focus); outline-offset: 2px; }
+.sg-svc__thumb {
+  width: 64px; height: 64px; flex: none;
+  border-radius: var(--rd-12);
+  object-fit: cover;
+  background: var(--color-background-elevation-2);
+}
+.sg-svc__body { min-width: 0; flex: 1; }
+.sg-svc__name { font-weight: 700; margin: 0 0 2px; }
+.sg-svc__desc {
+  color: var(--color-contents-contents-sub); font-size: 13px; margin: 0 0 var(--sp-4);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sg-svc__price { font-weight: 700; }
+
+/* ── 보장 카드 ───────────────────────────────────────────────────────── */
+.sg-guard {
+  padding: var(--sp-20);
+  background: var(--color-background-elevation-1);
+  border: 1px solid var(--color-divider-divider);
+  border-radius: var(--rd-16);
+}
+.sg-guard__num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; margin-bottom: var(--sp-12);
+  border-radius: 999px;
+  background: var(--color-background-primary-elevation-1);
+  color: var(--color-primary-primary-text);
+  font-size: 13px; font-weight: 800;
+}
+.sg-guard__title { font-weight: 700; margin: 0 0 var(--sp-4); }
+.sg-guard__body  { color: var(--color-contents-contents-sub); font-size: 13px; margin: 0; line-height: 1.6; }
+
+/* ── 전문가 카드 ─────────────────────────────────────────────────────── */
+.sg-pro-card {
+  padding: var(--sp-20);
+  background: var(--color-background-elevation-1);
+  border: 1px solid var(--color-divider-divider);
+  border-radius: var(--rd-16);
+  display: flex; flex-direction: column; gap: var(--sp-8);
+}
+.sg-pro-card__photo {
+  width: 72px; height: 72px; border-radius: 999px;
+  /* 컷아웃 뒤에 옅은 면을 깐다 — 사진이 흰 배경을 품고 있어도 다크에서 뜨지 않는다. */
+  background: var(--color-background-elevation-2);
+  object-fit: cover;
+}
+.sg-pro-card__quote { font-weight: 700; line-height: 1.5; margin: 0; }
+.sg-pro-card__body  { color: var(--color-contents-contents-sub); font-size: 13px; margin: 0; line-height: 1.6; }
+.sg-pro-card__name  { color: var(--color-primary-primary-text); font-size: 12px; font-weight: 700; }
+
+/* ── 통계 ────────────────────────────────────────────────────────────── */
+.sg-stats { display: flex; gap: var(--sp-32); flex-wrap: wrap; }
+.sg-stats__v { font-size: 24px; font-weight: 800; }
+.sg-stats__k { color: var(--color-contents-contents-sub); font-size: 12px; }
+
+/* ── 이용 방법 (숫자 스텝) ────────────────────────────────────────────
+   원본 사이트의 how1~4 는 **라이트 모드로 구워진 UI 목업**이라 다크에서 흰 사각형이
+   된다. 이미지를 쓰지 않고 토큰으로 그린다. */
+.sg-step { display: flex; gap: var(--sp-12); }
+.sg-step__n {
+  flex: none; width: 26px; height: 26px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--color-primary-primary);
+  color: var(--color-contents-contents-on);
+  font-size: 13px; font-weight: 800;
+}
+.sg-step__t { font-weight: 700; margin: 0 0 2px; }
+.sg-step__d { color: var(--color-contents-contents-sub); font-size: 13px; margin: 0; line-height: 1.6; }
+
+/* ── 상단바 ──────────────────────────────────────────────────────────── */
+.sg-topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--color-background-elevation-1);
+  border-bottom: 1px solid var(--color-divider-divider);
+}
+.sg-topbar__inner {
+  display: flex; align-items: center; gap: var(--sp-12);
+  height: 60px;
+}
+.sg-topbar__logo { display: flex; align-items: baseline; gap: var(--sp-8); flex: none; }
+.sg-topbar__tag { display: none; }
+@media (min-width: 600px) { .sg-topbar__tag { display: block; } }
+
+.sg-nav { display: flex; gap: var(--sp-16); flex: 1; margin-left: var(--sp-8); }
+.sg-nav a { font-size: 14px; color: var(--color-contents-contents-sub); font-weight: 500; }
+.sg-nav a[aria-current='page'] { color: var(--color-contents-contents); font-weight: 700; }
+
+/* ── 푸터 ────────────────────────────────────────────────────────────── */
+.sg-footer {
+  margin-top: var(--sp-40);
+  border-top: 1px solid var(--color-divider-divider);
+  background: var(--color-background-elevation-2);
+  color: var(--color-contents-contents-sub);
+  font-size: 12px; line-height: 1.8;
+}
+.sg-footer__inner { padding: var(--sp-32) var(--sp-20); }
