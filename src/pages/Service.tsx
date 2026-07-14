@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, Button, Card, Input, Price } from '@sgsg/design/components';
 import { api, ApiError, isLoggedIn, type Item, type Site, type SiteQuote } from '../api';
 import { uuid } from '../uuid';
+import { serviceContent } from '../services';
 
 /**
  * 현장 문진.
@@ -66,6 +67,9 @@ export default function Service() {
    */
   const [dates, setDates] = useState<string[]>([]);
   const MAX_DATES = 3;
+
+  /** 이 서비스의 진행과정·유의사항. 못 찾으면 null — 카드가 그냥 안 뜬다. */
+  const content = useMemo(() => serviceContent(item?.name), [item?.name]);
 
   const toggleDate = (d: string) =>
     setDates((prev) =>
@@ -358,6 +362,42 @@ export default function Service() {
             <span className="sg-muted">{won(item['base-price'] - deposit)}</span>
           </div>
         </Card>
+
+        {/* ── 서비스 진행과정 ────────────────────────────────────────────
+            원본 사이트(sgsg-customer-web)의 카피를 그대로 옮겼다. 고객이 "무슨 작업을
+            해주는 건데?" 를 묻지 않게 만든다 — 그 전화 한 통이 접수→연락 지연의 출발점이다. */}
+        {content && (
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 12 }}>서비스 진행과정</div>
+            {content.steps.map((st, i) => (
+              <div key={st.title} className="sg-step" style={{ marginBottom: 12 }}>
+                <div className="sg-step__n">{i + 1}</div>
+                <div>
+                  <p className="sg-step__t">{st.title}</p>
+                  <p className="sg-step__d" style={{ whiteSpace: 'pre-line' }}>
+                    {st.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </Card>
+        )}
+
+        {/* ── 유의사항 ───────────────────────────────────────────────────
+            ★ 장식이 아니다. '현장 추가비용'과 '전화를 받아야 한다'는 우리 주문의 절반이
+            깨지는 지점이고, 주문 **전에** 읽히지 않으면 그대로 취소 사유가 된다. */}
+        {content && (
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>이건 미리 알아 두세요</div>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.8 }}>
+              {content.notices.map((n) => (
+                <li key={n} style={{ color: 'var(--color-contents-contents-sub)' }}>
+                  {n}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         {/* 추가비용을 숨기면 현장에서 싸운다. 먼저 말한다. */}
         <Alert
